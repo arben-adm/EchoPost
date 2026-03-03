@@ -1,5 +1,7 @@
 import os
 import json
+import hmac
+import secrets
 import httpx
 import sqlite3
 from datetime import datetime
@@ -10,13 +12,46 @@ from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import RedirectResponse as StarletteRedirect
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 DB_PATH = os.environ.get("DB_PATH", "voicedesk.db")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")  # optional simple gate
 
+APP_SECRET = os.environ.get("APP_SECRET", "")
+if not APP_SECRET:
+    APP_SECRET = secrets.token_hex(32)
+    print("WARNING: APP_SECRET not set. Sessions will not survive restarts.")
+
+serializer = URLSafeTimedSerializer(APP_SECRET, salt="vd-session")
+SESSION_MAX_AGE = 8 * 3600
+
 app = FastAPI(title="VoiceDesk")
 templates = Jinja2Templates(directory="templates")
+
+# ─── Auth Middleware ──────────────────────────────────────────────────────────
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if not APP_PASSWORD:
+            return await call_next(request)
+
+        path = request.url.path
+        if path in ("/login", "/auth", "/logout") or path.startswith("/incoming"):
+            return await call_next(request)
+
+        token = request.cookies.get("vd_session")
+        if token:
+            try:
+                serializer.loads(token, max_age=SESSION_MAX_AGE)
+                return await call_next(request)
+            except (BadSignature, SignatureExpired):
+                pass
+
+        return StarletteRedirect(f"/login?next={path}")
+
+app.add_middleware(AuthMiddleware)
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 def get_db():
@@ -69,6 +104,35 @@ def db_messages(channel_id: int):
             (channel_id,)
         ).fetchall()
     return [dict(r) for r in rows]
+
+# ─── Routes: Auth ─────────────────────────────────────────────────────────────
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request, next: str = "/"):
+    return templates.TemplateResponse("login.html", {
+        "request": request, "next": next, "error": None,
+    })
+
+@app.post("/auth")
+async def auth(request: Request, password: str = Form(...), next: str = Form("/")):
+    if hmac.compare_digest(password, APP_PASSWORD):
+        token = serializer.dumps({"ok": True})
+        redirect_to = next if next.startswith("/") else "/"
+        response = RedirectResponse(redirect_to, status_code=303)
+        secure = request.headers.get("x-forwarded-proto") == "https"
+        response.set_cookie(
+            "vd_session", value=token, httponly=True,
+            samesite="lax", max_age=SESSION_MAX_AGE, secure=secure,
+        )
+        return response
+    return templates.TemplateResponse("login.html", {
+        "request": request, "next": next, "error": "Falsches Passwort",
+    })
+
+@app.post("/logout")
+async def logout():
+    response = RedirectResponse("/login", status_code=303)
+    response.delete_cookie("vd_session")
+    return response
 
 # ─── Routes: Pages ────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)

@@ -7,7 +7,8 @@ services:
       - voicedesk_data:/data
     environment:
       - DB_PATH=/data/voicedesk.db
-      # - APP_PASSWORD=yourpassword   # optional
+      # - APP_PASSWORD=yourpassword
+      # - APP_SECRET=change-this-to-a-random-64-char-string
 
 volumes:
   voicedesk_data:

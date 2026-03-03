@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir fastapi uvicorn[standard] httpx jinja2 python-multipart
+RUN pip install --no-cache-dir fastapi uvicorn[standard] httpx jinja2 python-multipart itsdangerous
 
 COPY main.py .
 COPY templates/ templates/

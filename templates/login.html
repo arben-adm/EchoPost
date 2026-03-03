@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0a">
+<title>VoiceDesk · Login</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--surface3:#1e1e1e;
+  --bubble-user:#1e1e1e;--bubble-assist:#242424;
+  --border:#222;--border2:#2a2a2a;
+  --text:#e8e8e8;--dim:#888;--dimmer:#3a3a3a;
+  --accent:#4A9EFF;--red:#e05252;--green:#52c87a;--blue:#5299e0;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;
+  --serif:Georgia,'Times New Roman',serif;
+  --sidebar:280px;--r:6px;--r-bubble:8px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;display:flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:36px;width:min(400px,90vw);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.logo{font-family:var(--serif);font-size:22px;font-style:italic;color:var(--accent);text-align:center;margin-bottom:2px}
+.logo-sub{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:28px}
+.error{color:var(--red);font-size:12px;text-align:center;margin-bottom:12px}
+.fi{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .15s ease;margin-bottom:16px}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--dimmer)}
+.btn-primary{display:block;width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:.03em;cursor:pointer;transition:opacity .15s ease}
+.btn-primary:hover{opacity:.85}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">VoiceDesk</div>
+  <div class="logo-sub">n8n · AssemblyAI</div>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form action="/auth" method="POST">
+    <input class="fi" type="password" name="password" autofocus placeholder="Passwort">
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn-primary">Anmelden</button>
+  </form>
+</div>
+</body>
+</html>
