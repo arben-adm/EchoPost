@@ -1,0 +1,15 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir fastapi uvicorn[standard] httpx jinja2 python-multipart
+
+COPY main.py .
+COPY templates/ templates/
+
+ENV DB_PATH=/data/voicedesk.db
+VOLUME ["/data"]
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

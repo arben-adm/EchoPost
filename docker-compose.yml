@@ -1,0 +1,13 @@
+services:
+  voicedesk:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - voicedesk_data:/data
+    environment:
+      - DB_PATH=/data/voicedesk.db
+      # - APP_PASSWORD=yourpassword   # optional
+
+volumes:
+  voicedesk_data:

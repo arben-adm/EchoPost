@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<title>VoiceDesk{% if current %} · {{ current.name }}{% endif %}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--surface3:#202020;
+  --border:#222;--border2:#2a2a2a;
+  --text:#e8e8e8;--dim:#666;--dimmer:#3a3a3a;
+  --warm:#c8b89a;--red:#e05252;--green:#52c87a;--blue:#5299e0;
+  --mono:'Geist Mono',monospace;--serif:'Instrument Serif',serif;
+  --sidebar:264px;--r:6px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;overflow:hidden}
+
+/* ── Layout ── */
+.app{display:flex;height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:22px 18px 14px;border-bottom:1px solid var(--border)}
+.logo{font-family:var(--serif);font-size:19px;font-style:italic;color:var(--warm);margin-bottom:2px}
+.logo-sub{font-size:10px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+.section-label{padding:14px 18px 6px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);display:flex;align-items:center;justify-content:space-between}
+.section-label button{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;transition:color .12s}
+.section-label button:hover{color:var(--text)}
+.channels{flex:1;overflow-y:auto;padding:0 8px 8px}
+.channels::-webkit-scrollbar{width:3px}.channels::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.ch{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);cursor:pointer;color:var(--dim);margin-bottom:1px;transition:background .1s,color .1s;position:relative;text-decoration:none}
+.ch:hover{background:var(--surface2);color:var(--text)}
+.ch.active{background:var(--surface2);color:var(--text)}
+.ch.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:14px;background:var(--warm);border-radius:2px}
+.ch-dot{width:6px;height:6px;border-radius:50%;background:var(--dimmer);flex-shrink:0}
+.ch.active .ch-dot{background:var(--warm)}
+.ch-name{font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-count{font-size:10px;color:var(--dimmer);font-variant-numeric:tabular-nums}
+.sidebar-foot{padding:10px 8px;border-top:1px solid var(--border)}
+.sfoot-btn{display:block;width:100%;padding:7px 10px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.07em;cursor:pointer;text-align:left;margin-bottom:5px;transition:all .12s}
+.sfoot-btn:last-child{margin-bottom:0}
+.sfoot-btn:hover{border-color:var(--dim);color:var(--text)}
+.sfoot-btn.danger:hover{border-color:var(--red);color:var(--red);background:rgba(224,82,82,.05)}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.chat-head{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface);flex-shrink:0}
+.chat-head-info{flex:1;min-width:0}
+.chat-title{font-size:13px;font-weight:500;letter-spacing:.03em}
+.chat-sub{font-size:10px;color:var(--dimmer);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head-actions{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{width:32px;height:32px;border-radius:var(--r);border:1px solid var(--border2);background:transparent;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .12s}
+.icon-btn:hover{border-color:var(--dim);color:var(--text)}
+.icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0}
+
+/* ── Messages ── */
+.messages{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.messages::-webkit-scrollbar{width:4px}.messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:6px;color:var(--dimmer)}
+.empty-icon{font-size:26px;opacity:.3;margin-bottom:4px}
+.empty-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.empty-hint{font-size:11px;color:var(--dimmer)}
+
+.msg{display:flex;flex-direction:column;gap:3px;animation:msgIn .16s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-items:flex-end}
+.msg.assistant,.msg.error{align-items:flex-start}
+.msg-meta{font-size:10px;color:var(--dimmer);letter-spacing:.05em;padding:0 3px}
+.bubble{max-width:min(540px,82%);padding:9px 13px;border-radius:var(--r);font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.msg.user .bubble{background:var(--surface2);border:1px solid var(--border2);border-bottom-right-radius:2px}
+.msg.user .bubble.audio{color:var(--warm);font-style:italic}
+.msg.user .bubble.file{color:var(--blue);font-style:italic}
+.msg.assistant .bubble{background:#141414;border:1px solid var(--border);border-bottom-left-radius:2px}
+.msg.error .bubble{background:rgba(224,82,82,.06);border:1px solid rgba(224,82,82,.18);color:var(--red)}
+.thinking{display:flex;gap:4px;align-items:center;padding:2px 0}
+.thinking span{width:5px;height:5px;border-radius:50%;background:var(--dimmer);animation:tp 1.2s ease-in-out infinite}
+.thinking span:nth-child(2){animation-delay:.2s}.thinking span:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,80%,100%{opacity:.3;transform:scale(.85)}40%{opacity:1;transform:scale(1)}}
+
+/* ── Input ── */
+.input-wrap{padding:14px 22px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.input-row{display:flex;gap:7px;align-items:flex-end}
+textarea.msg-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 13px;resize:none;min-height:42px;max-height:150px;outline:none;line-height:1.5;transition:background .12s}
+textarea.msg-input:focus{background:#161616}
+textarea.msg-input::placeholder{color:var(--dimmer)}
+.btn{width:42px;height:42px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);color:var(--dim);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
+.btn:hover{border-color:var(--dim);color:var(--text)}
+.btn.send:hover{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn.rec.active{background:var(--red);border-color:var(--red);color:#fff;animation:rp 1s ease-in-out infinite}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,.4)}50%{box-shadow:0 0 0 5px rgba(224,82,82,0)}}
+.input-hints{display:flex;gap:10px;margin-top:5px;align-items:center}
+.rec-timer{font-size:10px;color:var(--dimmer);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.rec-timer.active{color:var(--red)}
+.upload-label{font-size:10px;color:var(--dimmer);cursor:pointer;letter-spacing:.06em;transition:color .12s}
+.upload-label:hover{color:var(--dim)}
+#fileInput{display:none}
+
+/* ── Modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:26px;width:min(500px,92vw);max-height:85vh;overflow-y:auto}
+.modal-title{font-family:var(--serif);font-size:17px;font-style:italic;color:var(--warm);margin-bottom:18px}
+.form-group{margin-bottom:14px}
+label.fl{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+input.fi,textarea.fi{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 11px;outline:none;transition:border-color .12s}
+textarea.fi{resize:vertical;min-height:60px}
+input.fi:focus,textarea.fi:focus{border-color:var(--warm)}
+.form-hint{font-size:10px;color:var(--dimmer);margin-top:4px}
+.modal-actions{display:flex;gap:8px;margin-top:20px}
+.btn-primary{flex:1;padding:9px;background:var(--warm);color:#0a0a0a;border:none;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.07em;cursor:pointer;transition:opacity .12s}
+.btn-primary:hover{opacity:.85}
+.btn-secondary{padding:9px 18px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--dim);font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .12s}
+.btn-secondary:hover{border-color:var(--dim);color:var(--text)}
+.btn-danger-outline{padding:9px 14px;background:transparent;border:1px solid rgba(224,82,82,.3);border-radius:var(--r);color:var(--red);font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .12s}
+.btn-danger-outline:hover{border-color:var(--red);background:rgba(224,82,82,.06)}
+
+/* ── No channel state ── */
+.no-channel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dimmer)}
+.no-channel-icon{font-size:32px;opacity:.25;margin-bottom:6px}
+
+/* ── Mobile ── */
+.mob-btn{display:none;width:34px;height:34px;border:none;background:transparent;color:var(--dim);font-size:17px;cursor:pointer;align-items:center;justify-content:center;border-radius:var(--r)}
+.mob-btn:hover{color:var(--text)}
+.mob-overlay{display:none;position:fixed;inset:0;z-index:40}
+.mob-overlay.open{display:block}
+@media(max-width:640px){
+  :root{--sidebar:250px}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform .2s ease}
+  .sidebar.open{transform:translateX(0);box-shadow:8px 0 28px rgba(0,0,0,.6)}
+  .mob-btn{display:flex!important}
+  .chat-head{padding:10px 14px}
+  .messages{padding:14px}
+  .input-wrap{padding:10px 14px 14px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <div class="logo">VoiceDesk</div>
+    <div class="logo-sub">n8n · AssemblyAI</div>
+  </div>
+  <div class="section-label">
+    Channels
+    <button onclick="openCreateModal()" title="Channel hinzufügen">+</button>
+  </div>
+  <div class="channels">
+    {% for ch in channels %}
+    <a class="ch {% if current and ch.id == current.id %}active{% endif %}"
+       href="/channel/{{ ch.id }}" onclick="closeMobileSidebar()">
+      <div class="ch-dot"></div>
+      <div class="ch-name">{{ ch.name }}</div>
+    </a>
+    {% else %}
+    <div style="padding:12px 10px;font-size:11px;color:var(--dimmer);">Noch keine Channels. + drücken.</div>
+    {% endfor %}
+  </div>
+  <div class="sidebar-foot">
+    {% if current %}
+    <button class="sfoot-btn" onclick="openEditModal()">✎ &nbsp;Channel bearbeiten</button>
+    <form method="post" action="/channel/{{ current.id }}/clear" onsubmit="return confirm('Chat leeren?')">
+      <button type="submit" class="sfoot-btn danger">⌫ &nbsp;Chat leeren</button>
+    </form>
+    {% endif %}
+  </div>
+</aside>
+
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobileSidebar()"></div>
+
+<!-- Main -->
+<main class="main">
+  {% if current %}
+  <header class="chat-head">
+    <button class="mob-btn" onclick="toggleMobileSidebar()">☰</button>
+    <div class="chat-head-info">
+      <div class="chat-title">{{ current.name }}</div>
+      <div class="chat-sub">
+        {% if current.webhook_out %}out: {{ current.webhook_out[:60] }}{% if current.webhook_out|length > 60 %}…{% endif %}
+        {% else %}Kein Webhook konfiguriert — Channel bearbeiten{% endif %}
+      </div>
+    </div>
+    <div class="head-actions">
+      <button class="icon-btn" onclick="openEditModal()" title="Bearbeiten">✎</button>
+    </div>
+    <div class="status-dot" style="opacity:{{ '1' if current.webhook_out else '0.2' }}"></div>
+  </header>
+
+  <div class="messages" id="messages">
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="msg {{ msg.role }}">
+        <div class="msg-meta">{{ 'ich' if msg.role == 'user' else msg.role }} · {{ msg.created_at[11:16] }}</div>
+        <div class="bubble {{ msg.msg_type if msg.role == 'user' else '' }}">{{ msg.content }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">◎</div>
+        <div class="empty-label">{{ current.name }}</div>
+        <div class="empty-hint">Aufnahme starten oder Text eingeben</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="input-wrap">
+    <div class="input-row">
+      <textarea class="msg-input" id="textInput" placeholder="Nachricht eingeben…" rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn rec" id="recBtn" onclick="toggleRec()" title="Aufnahme">🎙</button>
+      <button class="btn send" onclick="sendText()" title="Senden">↑</button>
+    </div>
+    <div class="input-hints">
+      <div class="rec-timer" id="recTimer"></div>
+      <label class="upload-label" for="fileInput">📎 Datei hochladen</label>
+      <input type="file" id="fileInput" onchange="uploadFile(this)">
+    </div>
+  </div>
+
+  {% else %}
+  <header class="chat-head">
+    <button class="mob-btn" onclick="toggleMobileSidebar()">☰</button>
+    <div class="chat-head-info"><div class="chat-title">VoiceDesk</div></div>
+  </header>
+  <div class="no-channel">
+    <div class="no-channel-icon">◎</div>
+    <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase">Kein Channel ausgewählt</div>
+    <button class="btn-primary" style="margin-top:8px;padding:9px 20px;font-size:12px;" onclick="openCreateModal()">+ Channel erstellen</button>
+  </div>
+  {% endif %}
+</main>
+</div>
+
+<!-- Create Channel Modal -->
+<div class="modal-bg" id="createModal">
+  <div class="modal">
+    <div class="modal-title">Neuer Channel</div>
+    <form method="post" action="/channel/create">
+      <div class="form-group">
+        <label class="fl">Name *</label>
+        <input class="fi" name="name" required placeholder="z.B. Persönlicher_Schreibassistent">
+      </div>
+      <div class="form-group">
+        <label class="fl">Beschreibung</label>
+        <input class="fi" name="description" placeholder="Optional">
+      </div>
+      <div class="form-group">
+        <label class="fl">Outgoing Webhook (n8n)</label>
+        <input class="fi" name="webhook_out" type="url" placeholder="https://n8n.domain/webhook/…">
+        <div class="form-hint">Nachrichten & Dateien werden an diese URL gesendet</div>
+      </div>
+      <div class="form-group">
+        <label class="fl">Incoming Webhook URL</label>
+        <input class="fi" readonly
+          value="{% if current %}{{ request.url.scheme }}://{{ request.url.netloc }}/incoming/[ID]{% else %}Nach dem Erstellen verfügbar{% endif %}">
+        <div class="form-hint">n8n kann an diese URL POSTen, um Nachrichten in den Channel zu pushen</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeCreateModal()">Abbrechen</button>
+        <button type="submit" class="btn-primary">Erstellen</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Channel Modal -->
+{% if current %}
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <div class="modal-title">Channel bearbeiten</div>
+    <form method="post" action="/channel/{{ current.id }}/update">
+      <div class="form-group">
+        <label class="fl">Name *</label>
+        <input class="fi" name="name" required value="{{ current.name }}">
+      </div>
+      <div class="form-group">
+        <label class="fl">Beschreibung</label>
+        <input class="fi" name="description" value="{{ current.description }}">
+      </div>
+      <div class="form-group">
+        <label class="fl">Outgoing Webhook (n8n)</label>
+        <input class="fi" name="webhook_out" type="url" value="{{ current.webhook_out }}" placeholder="https://n8n.domain/webhook/…">
+        <div class="form-hint">Nachrichten & Dateien → n8n</div>
+      </div>
+      <div class="form-group">
+        <label class="fl">Incoming Webhook URL (read-only)</label>
+        <input class="fi" readonly value="{{ request.url.scheme }}://{{ request.url.netloc }}/incoming/{{ current.id }}">
+        <div class="form-hint">Diesen Endpunkt in n8n als Webhook-Trigger eintragen</div>
+      </div>
+      <div class="modal-actions">
+        <form method="post" action="/channel/{{ current.id }}/delete"
+              onsubmit="return confirm('Channel und alle Nachrichten löschen?')" style="margin:0">
+          <button type="submit" class="btn-danger-outline">Löschen</button>
+        </form>
+        <button type="button" class="btn-secondary" onclick="closeEditModal()">Abbrechen</button>
+        <button type="submit" class="btn-primary">Speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+const CHANNEL_ID = {{ current.id if current else 'null' }};
+
+// ── Scroll to bottom ──
+function scrollBottom() {
+  const m = document.getElementById('messages');
+  if (m) m.scrollTop = m.scrollHeight;
+}
+scrollBottom();
+
+// ── Auto-resize textarea ──
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+}
+
+// ── Add message to DOM ──
+function addMsg(role, content, type='text') {
+  const m = document.getElementById('messages');
+  const empty = m.querySelector('.empty');
+  if (empty) empty.remove();
+
+  const now = new Date();
+  const time = now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
+  const label = role === 'user' ? 'ich' : role;
+
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.style.animation = 'msgIn .16s ease';
+  const typeClass = role === 'user' ? type : '';
+  div.innerHTML = `<div class="msg-meta">${label} · ${time}</div><div class="bubble ${typeClass}">${escHtml(content)}</div>`;
+  m.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+function addThinking() {
+  const m = document.getElementById('messages');
+  const empty = m.querySelector('.empty');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = 'msg assistant'; div.id = 'thinking';
+  div.innerHTML = `<div class="msg-meta">assistant</div><div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div>`;
+  m.appendChild(div); scrollBottom();
+}
+
+function removeThinking() { const el = document.getElementById('thinking'); if (el) el.remove(); }
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Send text ──
+let busy = false;
+
+async function sendText() {
+  if (!CHANNEL_ID || busy) return;
+  const inp = document.getElementById('textInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; autoResize(inp); busy = true;
+  addMsg('user', text, 'text');
+  addThinking();
+  try {
+    const r = await fetch(`/channel/${CHANNEL_ID}/send`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    const data = await r.json();
+    removeThinking();
+    if (data.ok) addMsg('assistant', data.reply);
+    else addMsg('error', data.message || 'Unbekannter Fehler');
+  } catch(e) { removeThinking(); addMsg('error', `Fehler: ${e.message}`); }
+  busy = false;
+}
+
+// ── Audio recording ──
+let isRec = false, mediaRec = null, chunks = [], recInterval = null, recSecs = 0;
+
+async function toggleRec() {
+  if (isRec) stopRec(); else await startRec();
+}
+
+async function startRec() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks = [];
+    const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    mediaRec = new MediaRecorder(stream, mime ? {mimeType:mime} : {});
+    mediaRec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    mediaRec.onstop = () => { stream.getTracks().forEach(t=>t.stop()); sendAudio(); };
+    mediaRec.start(200);
+    isRec = true; recSecs = 0;
+    document.getElementById('recBtn').classList.add('active');
+    document.getElementById('recBtn').textContent = '⏹';
+    recInterval = setInterval(() => {
+      recSecs++;
+      const t = document.getElementById('recTimer');
+      const m = String(Math.floor(recSecs/60)).padStart(2,'0');
+      const s = String(recSecs%60).padStart(2,'0');
+      t.textContent = `● ${m}:${s}`; t.classList.add('active');
+    }, 1000);
+  } catch(e) { alert('Mikrofon nicht verfügbar: ' + e.message); }
+}
+
+function stopRec() {
+  if (!mediaRec || !isRec) return;
+  mediaRec.stop(); isRec = false;
+  clearInterval(recInterval);
+  document.getElementById('recBtn').classList.remove('active');
+  document.getElementById('recBtn').textContent = '🎙';
+  const t = document.getElementById('recTimer');
+  t.textContent = ''; t.classList.remove('active');
+}
+
+async function sendAudio() {
+  if (!CHANNEL_ID || busy) return;
+  busy = true;
+  const mime = mediaRec.mimeType || 'audio/webm';
+  const ext = mime.includes('mp4') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
+  const blob = new Blob(chunks, {type: mime});
+  const m = String(Math.floor(recSecs/60)).padStart(2,'0');
+  const s = String(recSecs%60).padStart(2,'0');
+  addMsg('user', `🎙 Audio ${m}:${s}`, 'audio');
+  addThinking();
+  try {
+    const fd = new FormData();
+    fd.append('file', blob, `recording.${ext}`);
+    const r = await fetch(`/channel/${CHANNEL_ID}/send-audio`, {method:'POST', body:fd});
+    const data = await r.json();
+    removeThinking();
+    if (data.ok) addMsg('assistant', data.reply);
+    else addMsg('error', data.message || 'Unbekannter Fehler');
+  } catch(e) { removeThinking(); addMsg('error', `Fehler: ${e.message}`); }
+  busy = false;
+}
+
+// ── File upload ──
+async function uploadFile(input) {
+  if (!CHANNEL_ID || !input.files.length || busy) return;
+  busy = true;
+  const file = input.files[0];
+  input.value = '';
+  addMsg('user', `📎 ${file.name}`, 'file');
+  addThinking();
+  try {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    const r = await fetch(`/channel/${CHANNEL_ID}/upload`, {method:'POST', body:fd});
+    const data = await r.json();
+    removeThinking();
+    if (data.ok) addMsg('assistant', data.reply);
+    else addMsg('error', data.message || 'Unbekannter Fehler');
+  } catch(e) { removeThinking(); addMsg('error', `Fehler: ${e.message}`); }
+  busy = false;
+}
+
+// ── Modals ──
+function openCreateModal() { document.getElementById('createModal').classList.add('open'); }
+function closeCreateModal() { document.getElementById('createModal').classList.remove('open'); }
+function openEditModal() { const m = document.getElementById('editModal'); if(m) m.classList.add('open'); }
+function closeEditModal() { const m = document.getElementById('editModal'); if(m) m.classList.remove('open'); }
+
+document.getElementById('createModal').addEventListener('click', e => { if(e.target === e.currentTarget) closeCreateModal(); });
+{% if current %}
+document.getElementById('editModal').addEventListener('click', e => { if(e.target === e.currentTarget) closeEditModal(); });
+{% endif %}
+
+// ── Mobile sidebar ──
+function toggleMobileSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mobOverlay').classList.toggle('open');
+}
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('open');
+}
+</script>
+</body>
+</html>
