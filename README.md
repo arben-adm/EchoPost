@@ -20,7 +20,7 @@ VoiceDesk acts as a bridge between users and [n8n](https://n8n.io) automation wo
 
 ```bash
 docker compose up --build
-# → http://localhost:8000
+# → http://localhost:3010
 ```
 
 1. Click **+ Channel** to create a channel
@@ -34,7 +34,7 @@ docker compose up --build
 1. Push this repo to your Git host
 2. In Coolify: **New Resource → Dockerfile**
 3. Build context: repository root
-4. Port: `8000`
+4. Port: `3010`
 5. Add a volume mount: `/data` → persistent storage
 
 ### Option B: Docker Image

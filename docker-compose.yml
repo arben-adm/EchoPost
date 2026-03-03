@@ -2,7 +2,7 @@ services:
   voicedesk:
     build: .
     ports:
-      - "8000:8000"
+      - "3010:3010"
     volumes:
       - voicedesk_data:/data
     environment:

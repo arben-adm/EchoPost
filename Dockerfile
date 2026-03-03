@@ -10,6 +10,6 @@ COPY templates/ templates/
 ENV DB_PATH=/data/voicedesk.db
 VOLUME ["/data"]
 
-EXPOSE 8000
+EXPOSE 3010
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3010"]
