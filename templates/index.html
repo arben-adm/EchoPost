@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0a">
 <title>VoiceDesk{% if current %} · {{ current.name }}{% endif %}</title>
@@ -95,7 +95,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 @keyframes tp{0%,80%,100%{opacity:.3;transform:scale(.85)}40%{opacity:1;transform:scale(1)}}
 
 /* ── Input ── */
-.input-wrap{padding:17px 26px 22px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.input-wrap{padding:17px 26px 22px;padding-bottom:calc(22px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;position:sticky;bottom:0}
 .input-row{display:flex;gap:9px;align-items:flex-end}
 textarea.msg-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:14px;padding:12px 16px;resize:none;min-height:48px;max-height:150px;outline:none;line-height:1.5;transition:border-color .15s ease,background .15s ease}
 textarea.msg-input:focus{border-color:var(--accent);background:#161616}
@@ -105,6 +105,8 @@ textarea.msg-input::placeholder{color:var(--dimmer)}
 .btn.send:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.rec.active{background:var(--accent);border-color:var(--accent);color:#fff;animation:rp 1s ease-in-out infinite}
 @keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(74,158,255,.4)}50%{box-shadow:0 0 0 6px rgba(74,158,255,0)}}
+.cancel-rec{display:none;font-size:14px;font-weight:600}
+.cancel-rec:hover{border-color:var(--red);color:var(--red)}
 .input-hints{display:flex;gap:12px;margin-top:7px;align-items:center}
 .rec-timer{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:.06em}
 .rec-timer.active{color:var(--accent)}
@@ -147,7 +149,9 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
   .mob-btn{display:flex!important}
   .chat-head{padding:12px 16px}
   .messages{padding:16px}
-  .input-wrap{padding:12px 16px 16px}
+  .input-wrap{padding:12px 14px 16px;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  .btn{width:48px;height:48px}
+  textarea.msg-input{min-height:48px}
 }
 </style>
 </head>
@@ -244,6 +248,7 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
     <div class="input-row">
       <textarea class="msg-input" id="textInput" placeholder="Nachricht eingeben…" rows="1"
         onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn cancel-rec" id="cancelRecBtn" onclick="cancelRec()" title="Aufnahme verwerfen">✕</button>
       <button class="btn rec" id="recBtn" onclick="toggleRec()" title="Aufnahme">🎙</button>
       <button class="btn send" onclick="sendText()" title="Senden">↑</button>
     </div>
@@ -460,7 +465,7 @@ async function sendText() {
 }
 
 // ── Audio recording ──
-let isRec = false, mediaRec = null, chunks = [], recInterval = null, recSecs = 0;
+let isRec = false, mediaRec = null, chunks = [], recInterval = null, recSecs = 0, currentStream = null, cancelled = false;
 
 async function toggleRec() {
   if (isRec) stopRec(); else await startRec();
@@ -473,12 +478,18 @@ async function startRec() {
     const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']
       .find(t => MediaRecorder.isTypeSupported(t)) || '';
     mediaRec = new MediaRecorder(stream, mime ? {mimeType:mime} : {});
+    currentStream = stream;
     mediaRec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    mediaRec.onstop = () => { stream.getTracks().forEach(t=>t.stop()); sendAudio(); };
+    mediaRec.onstop = () => {
+      currentStream?.getTracks().forEach(t=>t.stop());
+      if (cancelled) { cancelled = false; return; }
+      sendAudio();
+    };
     mediaRec.start(200);
     isRec = true; recSecs = 0;
     document.getElementById('recBtn').classList.add('active');
     document.getElementById('recBtn').textContent = '⏹';
+    document.getElementById('cancelRecBtn').style.display = 'flex';
     recInterval = setInterval(() => {
       recSecs++;
       const t = document.getElementById('recTimer');
@@ -495,8 +506,24 @@ function stopRec() {
   clearInterval(recInterval);
   document.getElementById('recBtn').classList.remove('active');
   document.getElementById('recBtn').textContent = '🎙';
+  document.getElementById('cancelRecBtn').style.display = 'none';
   const t = document.getElementById('recTimer');
   t.textContent = ''; t.classList.remove('active');
+}
+
+function cancelRec() {
+  if (!isRec) return;
+  cancelled = true;
+  clearInterval(recInterval);
+  isRec = false;
+  document.getElementById('recBtn').classList.remove('active');
+  document.getElementById('recBtn').textContent = '🎙';
+  document.getElementById('cancelRecBtn').style.display = 'none';
+  mediaRec.stop();
+  const t = document.getElementById('recTimer');
+  t.textContent = 'Verworfen'; t.classList.remove('active');
+  t.style.color = 'var(--red)';
+  setTimeout(() => { t.textContent = ''; t.style.color = ''; }, 1500);
 }
 
 async function sendAudio() {
