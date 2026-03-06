@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir fastapi uvicorn[standard] httpx jinja2 python-mul
 COPY main.py .
 COPY templates/ templates/
 
-ENV DB_PATH=/data/voicedesk.db
+ENV DB_PATH=/data/echopost.db
 VOLUME ["/data"]
 
 EXPOSE 3010

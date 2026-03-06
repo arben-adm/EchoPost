@@ -1,14 +1,14 @@
 services:
-  voicedesk:
+  echopost:
     build: .
     ports:
       - "3010:3010"
     volumes:
-      - voicedesk_data:/data
+      - echopost_data:/data
     environment:
-      - DB_PATH=/data/voicedesk.db
+      - DB_PATH=/data/echopost.db
       # - APP_PASSWORD=yourpassword
       # - APP_SECRET=change-this-to-a-random-64-char-string
 
 volumes:
-  voicedesk_data:
+  echopost_data:

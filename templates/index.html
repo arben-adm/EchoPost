@@ -4,20 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a0a0a">
-<title>VoiceDesk{% if current %} · {{ current.name }}{% endif %}</title>
+<meta name="theme-color" content="#09090b">
+<title>EchoPost{% if current %} · {{ current.name }}{% endif %}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--surface3:#1e1e1e;
-  --bubble-user:#1e1e1e;--bubble-assist:#242424;
-  --border:#222;--border2:#2a2a2a;
-  --text:#e8e8e8;--dim:#888;--dimmer:#3a3a3a;
-  --accent:#4A9EFF;--red:#e05252;--green:#52c87a;--blue:#5299e0;
+  --bg:#09090b;--surface:#111113;--surface2:#18181b;--surface3:#1c1c1f;
+  --bubble-user:#1c1c1f;--bubble-assist:#222225;
+  --border:#27272a;--border2:#2e2e33;
+  --text:#fafafa;--dim:#71717a;--dimmer:#3f3f46;
+  --accent:#3b82f6;--red:#ef4444;--green:#22c55e;--blue:#60a5fa;
   --sans:'Inter',system-ui,-apple-system,sans-serif;
-  --serif:Georgia,'Times New Roman',serif;
-  --sidebar:280px;--r:6px;--r-bubble:8px;
+  --sidebar:272px;--r:8px;--r-bubble:12px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;overflow:hidden}
 
@@ -25,117 +24,116 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .app{display:flex;height:100vh}
 
 /* ── Sidebar ── */
-.sidebar{width:var(--sidebar);min-width:var(--sidebar);background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.sidebar-head{padding:26px 22px 16px;border-bottom:1px solid var(--border)}
-.logo{font-family:var(--serif);font-size:20px;font-style:italic;color:var(--accent);margin-bottom:2px}
-.logo-sub{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
-.section-label{padding:18px 22px 8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);display:flex;align-items:center;justify-content:space-between}
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:24px 20px 18px}
+.logo{font-size:20px;font-weight:600;letter-spacing:-.03em}
+.logo span{color:var(--accent)}
+.section-label{padding:16px 20px 8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);display:flex;align-items:center;justify-content:space-between}
 .section-label button{background:none;border:none;color:var(--dim);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;transition:color .15s ease}
 .section-label button:hover{color:var(--text)}
 .channels{flex:1;overflow-y:auto;padding:4px 0 10px}
 .channels::-webkit-scrollbar{width:3px}.channels::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
 /* Channel items */
-.ch{display:flex;align-items:center;gap:11px;padding:10px 14px 10px 16px;cursor:pointer;color:var(--dim);margin:0;transition:color .15s ease,background .15s ease;position:relative;text-decoration:none;border-left:3px solid transparent}
-.ch:hover{color:var(--text);border-left-color:var(--dimmer)}
-.ch.active{color:var(--text);border-left-color:var(--accent);background:rgba(74,158,255,.06)}
+.ch{display:flex;align-items:center;gap:10px;padding:9px 14px 9px 16px;cursor:pointer;color:var(--dim);transition:color .15s ease,background .15s ease;text-decoration:none;border-left:3px solid transparent;margin:1px 0}
+.ch:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.ch.active{color:var(--text);border-left-color:var(--accent);background:rgba(59,130,246,.06)}
 
 /* Channel avatar */
-.ch-avatar{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0;letter-spacing:0}
-.ch-name{font-size:14px;font-weight:400;letter-spacing:.02em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ch-count{font-size:11px;color:var(--dimmer);font-variant-numeric:tabular-nums}
+.ch-avatar{width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.ch-name{font-size:13px;font-weight:400;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Sidebar footer */
-.sidebar-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.sidebar-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
 .sfoot-btn{display:inline;background:none;border:none;color:var(--dim);font-family:var(--sans);font-size:12px;cursor:pointer;text-align:left;padding:5px 2px;transition:color .15s ease;text-decoration:none}
-.sfoot-btn:hover{color:var(--text);text-decoration:underline}
-.sfoot-btn.danger:hover{color:var(--red);text-decoration:underline}
+.sfoot-btn:hover{color:var(--text)}
+.sfoot-btn.danger:hover{color:var(--red)}
 
 /* ── Main ── */
 .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
-.chat-head{padding:17px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface);flex-shrink:0}
+.chat-head{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface);flex-shrink:0}
 .chat-head-info{flex:1;min-width:0}
-.chat-title{font-size:15px;font-weight:500;letter-spacing:.01em}
-.chat-sub{font-size:11px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.head-actions{display:flex;gap:8px;flex-shrink:0}
-.icon-btn{width:34px;height:34px;border-radius:var(--r);border:1px solid var(--border2);background:transparent;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s ease}
+.chat-title{font-size:15px;font-weight:500}
+.chat-sub{font-size:11px;color:var(--dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head-actions{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{width:32px;height:32px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s ease}
 .icon-btn:hover{border-color:var(--dim);color:var(--text)}
 .icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
 
 /* ── Messages ── */
-.messages{flex:1;overflow-y:auto;padding:26px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth}
-.messages::-webkit-scrollbar{width:4px}.messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.messages::-webkit-scrollbar{width:4px}.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:8px;color:var(--dimmer)}
-.empty-icon{font-size:30px;opacity:.3;margin-bottom:6px}
-.empty-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.empty-icon{font-size:28px;opacity:.25;margin-bottom:4px}
+.empty-label{font-size:13px;font-weight:500;letter-spacing:.04em}
 .empty-hint{font-size:11px;color:var(--dim)}
 
-.msg{display:flex;flex-direction:column;gap:4px;animation:msgIn .16s ease}
-@keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg{display:flex;flex-direction:column;gap:4px;animation:msgIn .15s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 .msg.user{align-items:flex-end}
 .msg.assistant,.msg.error{align-items:flex-start}
 
 /* Message with avatar row */
 .msg-row{display:flex;align-items:flex-start;gap:10px}
-.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;background:#6366f1;margin-top:2px}
-.msg-body{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:min(540px,82%)}
+.msg-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;background:var(--accent);margin-top:2px}
+.msg-body{display:flex;flex-direction:column;gap:3px;min-width:0;max-width:min(540px,82%)}
 
-.msg-meta{font-size:11px;color:var(--dim);letter-spacing:.03em;padding:0 3px;display:flex;align-items:center;gap:6px}
-.msg-meta .msg-time{margin-left:auto;color:var(--dim);font-size:11px}
-.bubble{padding:11px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.msg.user .bubble{background:var(--bubble-user);border:none;border-radius:var(--r-bubble);border-bottom-right-radius:3px}
+.msg-meta{font-size:11px;color:var(--dim);padding:0 2px;display:flex;align-items:center;gap:6px}
+.msg-meta .msg-time{margin-left:auto;font-size:10px;color:var(--dimmer)}
+.bubble{padding:10px 14px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg.user .bubble{background:var(--bubble-user);border-radius:var(--r-bubble);border-bottom-right-radius:4px}
 .msg.user .bubble.audio{color:var(--accent);font-style:italic}
 .msg.user .bubble.file{color:var(--blue);font-style:italic}
-.msg.assistant .bubble{background:var(--bubble-assist);border:none;border-radius:var(--r-bubble);border-bottom-left-radius:3px}
-.msg.error .bubble{background:rgba(224,82,82,.06);border:1px solid rgba(224,82,82,.18);color:var(--red);border-radius:var(--r-bubble)}
+.msg.assistant .bubble{background:var(--bubble-assist);border-radius:var(--r-bubble);border-bottom-left-radius:4px}
+.msg.error .bubble{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);color:var(--red);border-radius:var(--r-bubble)}
 .thinking{display:flex;gap:4px;align-items:center;padding:2px 0}
-.thinking span{width:5px;height:5px;border-radius:50%;background:var(--dimmer);animation:tp 1.2s ease-in-out infinite}
+.thinking span{width:4px;height:4px;border-radius:50%;background:var(--dimmer);animation:tp 1.2s ease-in-out infinite}
 .thinking span:nth-child(2){animation-delay:.2s}.thinking span:nth-child(3){animation-delay:.4s}
 @keyframes tp{0%,80%,100%{opacity:.3;transform:scale(.85)}40%{opacity:1;transform:scale(1)}}
 
 /* ── Input ── */
-.input-wrap{padding:17px 26px 22px;padding-bottom:calc(22px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;position:sticky;bottom:0}
-.input-row{display:flex;gap:9px;align-items:flex-end}
-textarea.msg-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:14px;padding:12px 16px;resize:none;min-height:48px;max-height:150px;outline:none;line-height:1.5;transition:border-color .15s ease,background .15s ease}
-textarea.msg-input:focus{border-color:var(--accent);background:#161616}
+.input-wrap{padding:16px 24px 20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;position:sticky;bottom:0}
+.input-row{display:flex;gap:8px;align-items:flex-end}
+textarea.msg-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:14px;padding:11px 14px;resize:none;min-height:44px;max-height:150px;outline:none;line-height:1.5;transition:border-color .15s ease}
+textarea.msg-input:focus{border-color:var(--accent)}
 textarea.msg-input::placeholder{color:var(--dimmer)}
-.btn{width:46px;height:46px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s ease;flex-shrink:0}
+.btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s ease;flex-shrink:0}
 .btn:hover{border-color:var(--dim);color:var(--text)}
 .btn.send:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.rec.active{background:var(--accent);border-color:var(--accent);color:#fff;animation:rp 1s ease-in-out infinite}
-@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(74,158,255,.4)}50%{box-shadow:0 0 0 6px rgba(74,158,255,0)}}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.4)}50%{box-shadow:0 0 0 6px rgba(59,130,246,0)}}
 .cancel-rec{display:none;font-size:14px;font-weight:600}
 .cancel-rec:hover{border-color:var(--red);color:var(--red)}
-.input-hints{display:flex;gap:12px;margin-top:7px;align-items:center}
+.input-hints{display:flex;gap:12px;margin-top:6px;align-items:center}
 .rec-timer{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:.06em}
 .rec-timer.active{color:var(--accent)}
-.upload-label{font-size:11px;color:var(--dim);cursor:pointer;letter-spacing:.04em;transition:color .15s ease}
+.upload-label{font-size:11px;color:var(--dim);cursor:pointer;transition:color .15s ease}
 .upload-label:hover{color:var(--text)}
 #fileInput{display:none}
 
 /* ── Modal ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;backdrop-filter:blur(6px);align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:30px;width:min(520px,92vw);max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3)}
-.modal-title{font-family:var(--serif);font-size:18px;font-style:italic;color:var(--accent);margin-bottom:22px}
-.form-group{margin-bottom:16px}
-label.fl{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
-input.fi,textarea.fi{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .15s ease}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(480px,92vw);max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:20px}
+.form-group{margin-bottom:14px}
+label.fl{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+input.fi,textarea.fi{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .15s ease}
 textarea.fi{resize:vertical;min-height:60px}
 input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
-.form-hint{font-size:11px;color:var(--dim);margin-top:5px}
-.modal-actions{display:flex;gap:10px;margin-top:24px}
-.btn-primary{flex:1;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:.03em;cursor:pointer;transition:opacity .15s ease}
-.btn-primary:hover{opacity:.85}
-.btn-secondary{padding:11px 20px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--dim);font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s ease}
+.form-hint{font-size:11px;color:var(--dim);margin-top:4px}
+.modal-actions{display:flex;gap:8px;margin-top:22px}
+.btn-primary{flex:1;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s ease}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{padding:10px 18px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--dim);font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s ease}
 .btn-secondary:hover{border-color:var(--dim);color:var(--text)}
-.btn-danger-outline{padding:11px 16px;background:transparent;border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s ease}
-.btn-danger-outline:hover{border-color:var(--red);background:rgba(224,82,82,.06)}
+.btn-danger-outline{padding:10px 14px;background:transparent;border:1px solid rgba(239,68,68,.25);border-radius:8px;color:var(--red);font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s ease}
+.btn-danger-outline:hover{border-color:var(--red);background:rgba(239,68,68,.06)}
 
 /* ── No channel state ── */
-.no-channel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--dimmer)}
-.no-channel-icon{font-size:36px;opacity:.25;margin-bottom:6px}
+.no-channel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dimmer)}
+.no-channel-icon{font-size:32px;opacity:.2;margin-bottom:4px}
 
 /* ── Mobile ── */
 .mob-btn{display:none;width:36px;height:36px;border:none;background:transparent;color:var(--dim);font-size:18px;cursor:pointer;align-items:center;justify-content:center;border-radius:var(--r)}
@@ -145,7 +143,7 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
 @media(max-width:640px){
   :root{--sidebar:270px}
   .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform .2s ease}
-  .sidebar.open{transform:translateX(0);box-shadow:8px 0 28px rgba(0,0,0,.6)}
+  .sidebar.open{transform:translateX(0);box-shadow:8px 0 24px rgba(0,0,0,.5)}
   .mob-btn{display:flex!important}
   .chat-head{padding:12px 16px}
   .messages{padding:16px}
@@ -161,12 +159,11 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-head">
-    <div class="logo">VoiceDesk</div>
-    <div class="logo-sub">n8n · AssemblyAI</div>
+    <div class="logo">Echo<span>Post</span></div>
   </div>
   <div class="section-label">
     Channels
-    <button onclick="openCreateModal()" title="Channel hinzufügen">+</button>
+    <button onclick="openCreateModal()" title="Channel hinzufuegen">+</button>
   </div>
   <div class="channels">
     {% for ch in channels %}
@@ -176,14 +173,14 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
       <div class="ch-name">{{ ch.name }}</div>
     </a>
     {% else %}
-    <div style="padding:14px 18px;font-size:12px;color:var(--dim);">Noch keine Channels. + drücken.</div>
+    <div style="padding:14px 18px;font-size:12px;color:var(--dim);">Noch keine Channels.</div>
     {% endfor %}
   </div>
   <div class="sidebar-foot">
     {% if current %}
-    <button class="sfoot-btn" onclick="openEditModal()">✎ Channel bearbeiten</button>
+    <button class="sfoot-btn" onclick="openEditModal()">Channel bearbeiten</button>
     <form method="post" action="/channel/{{ current.id }}/clear" onsubmit="return confirm('Chat leeren?')" style="margin:0">
-      <button type="submit" class="sfoot-btn danger">⌫ Chat leeren</button>
+      <button type="submit" class="sfoot-btn danger">Chat leeren</button>
     </form>
     {% endif %}
   </div>
@@ -199,14 +196,14 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
     <div class="chat-head-info">
       <div class="chat-title">{{ current.name }}</div>
       <div class="chat-sub">
-        {% if current.webhook_out %}out: {{ current.webhook_out[:60] }}{% if current.webhook_out|length > 60 %}…{% endif %}
-        {% else %}Kein Webhook konfiguriert — Channel bearbeiten{% endif %}
+        {% if current.webhook_out %}{{ current.webhook_out[:60] }}{% if current.webhook_out|length > 60 %}…{% endif %}
+        {% else %}Kein Webhook konfiguriert{% endif %}
       </div>
     </div>
     <div class="head-actions">
       <button class="icon-btn" onclick="openEditModal()" title="Bearbeiten">✎</button>
     </div>
-    <div class="status-dot" style="opacity:{{ '1' if current.webhook_out else '0.2' }}"></div>
+    <div class="status-dot" style="opacity:{{ '1' if current.webhook_out else '0.15' }}"></div>
   </header>
 
   <div class="messages" id="messages">
@@ -239,14 +236,14 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
       <div class="empty">
         <div class="empty-icon">◎</div>
         <div class="empty-label">{{ current.name }}</div>
-        <div class="empty-hint">Aufnahme starten oder Text eingeben</div>
+        <div class="empty-hint">Nachricht eingeben oder Aufnahme starten</div>
       </div>
     {% endif %}
   </div>
 
   <div class="input-wrap">
     <div class="input-row">
-      <textarea class="msg-input" id="textInput" placeholder="Nachricht eingeben…" rows="1"
+      <textarea class="msg-input" id="textInput" placeholder="Nachricht…" rows="1"
         onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="btn cancel-rec" id="cancelRecBtn" onclick="cancelRec()" title="Aufnahme verwerfen">✕</button>
       <button class="btn rec" id="recBtn" onclick="toggleRec()" title="Aufnahme">🎙</button>
@@ -254,7 +251,7 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
     </div>
     <div class="input-hints">
       <div class="rec-timer" id="recTimer"></div>
-      <label class="upload-label" for="fileInput">📎 Datei hochladen</label>
+      <label class="upload-label" for="fileInput">Datei anhängen</label>
       <input type="file" id="fileInput" onchange="uploadFile(this)">
     </div>
   </div>
@@ -262,12 +259,12 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
   {% else %}
   <header class="chat-head">
     <button class="mob-btn" onclick="toggleMobileSidebar()">☰</button>
-    <div class="chat-head-info"><div class="chat-title">VoiceDesk</div></div>
+    <div class="chat-head-info"><div class="chat-title">EchoPost</div></div>
   </header>
   <div class="no-channel">
     <div class="no-channel-icon">◎</div>
-    <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase">Kein Channel ausgewählt</div>
-    <button class="btn-primary" style="margin-top:10px;padding:11px 24px;font-size:13px;" onclick="openCreateModal()">+ Channel erstellen</button>
+    <div style="font-size:13px;color:var(--dim)">Kein Channel ausgewählt</div>
+    <button class="btn-primary" style="margin-top:8px;padding:10px 22px;font-size:13px;" onclick="openCreateModal()">+ Channel erstellen</button>
   </div>
   {% endif %}
 </main>
@@ -279,23 +276,23 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
     <div class="modal-title">Neuer Channel</div>
     <form method="post" action="/channel/create">
       <div class="form-group">
-        <label class="fl">Name *</label>
-        <input class="fi" name="name" required placeholder="z.B. Persönlicher_Schreibassistent">
+        <label class="fl">Name</label>
+        <input class="fi" name="name" required placeholder="z.B. Support, Notifications">
       </div>
       <div class="form-group">
         <label class="fl">Beschreibung</label>
         <input class="fi" name="description" placeholder="Optional">
       </div>
       <div class="form-group">
-        <label class="fl">Outgoing Webhook (n8n)</label>
-        <input class="fi" name="webhook_out" type="url" placeholder="https://n8n.domain/webhook/…">
+        <label class="fl">Outgoing Webhook</label>
+        <input class="fi" name="webhook_out" type="url" placeholder="https://…">
         <div class="form-hint">Nachrichten & Dateien werden an diese URL gesendet</div>
       </div>
       <div class="form-group">
         <label class="fl">Incoming Webhook URL</label>
         <input class="fi" readonly
           value="{% if current %}{{ request.url.scheme }}://{{ request.url.netloc }}/incoming/[ID]{% else %}Nach dem Erstellen verfügbar{% endif %}">
-        <div class="form-hint">n8n kann an diese URL POSTen, um Nachrichten in den Channel zu pushen</div>
+        <div class="form-hint">Externe Services können an diese URL POSTen</div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" onclick="closeCreateModal()">Abbrechen</button>
@@ -312,7 +309,7 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
     <div class="modal-title">Channel bearbeiten</div>
     <form method="post" action="/channel/{{ current.id }}/update">
       <div class="form-group">
-        <label class="fl">Name *</label>
+        <label class="fl">Name</label>
         <input class="fi" name="name" required value="{{ current.name }}">
       </div>
       <div class="form-group">
@@ -320,14 +317,14 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
         <input class="fi" name="description" value="{{ current.description }}">
       </div>
       <div class="form-group">
-        <label class="fl">Outgoing Webhook (n8n)</label>
-        <input class="fi" name="webhook_out" type="url" value="{{ current.webhook_out }}" placeholder="https://n8n.domain/webhook/…">
-        <div class="form-hint">Nachrichten & Dateien → n8n</div>
+        <label class="fl">Outgoing Webhook</label>
+        <input class="fi" name="webhook_out" type="url" value="{{ current.webhook_out }}" placeholder="https://…">
+        <div class="form-hint">Nachrichten & Dateien werden hierhin weitergeleitet</div>
       </div>
       <div class="form-group">
-        <label class="fl">Incoming Webhook URL (read-only)</label>
+        <label class="fl">Incoming Webhook URL</label>
         <input class="fi" readonly value="{{ request.url.scheme }}://{{ request.url.netloc }}/incoming/{{ current.id }}">
-        <div class="form-hint">Diesen Endpunkt in n8n als Webhook-Trigger eintragen</div>
+        <div class="form-hint">Diesen Endpunkt als Webhook-URL eintragen</div>
       </div>
       <div class="modal-actions">
         <form method="post" action="/channel/{{ current.id }}/delete"
@@ -345,146 +342,84 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
 <script>
 const CHANNEL_ID = {{ current.id if current else 'null' }};
 
-// ── Generate deterministic color from string ──
 function avatarColor(name) {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   const hues = [210, 260, 330, 15, 45, 160, 190, 280, 350, 120];
-  const hue = hues[Math.abs(hash) % hues.length];
-  return `hsl(${hue}, 55%, 45%)`;
+  return `hsl(${hues[Math.abs(hash) % hues.length]}, 50%, 42%)`;
 }
 
-// ── Apply avatar colors to channel items ──
 document.querySelectorAll('.ch-avatar').forEach(el => {
-  const name = el.getAttribute('data-name') || el.textContent.trim();
-  el.style.background = avatarColor(name);
+  el.style.background = avatarColor(el.getAttribute('data-name') || el.textContent.trim());
 });
 
-// ── Scroll to bottom ──
-function scrollBottom() {
-  const m = document.getElementById('messages');
-  if (m) m.scrollTop = m.scrollHeight;
-}
+function scrollBottom() { const m = document.getElementById('messages'); if (m) m.scrollTop = m.scrollHeight; }
 scrollBottom();
 
-// ── Auto-resize textarea ──
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 150) + 'px';
-}
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 150) + 'px'; }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); } }
 
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
-}
-
-// ── Add message to DOM ──
 function addMsg(role, content, type='text') {
   const m = document.getElementById('messages');
   const empty = m.querySelector('.empty');
   if (empty) empty.remove();
-
   const now = new Date();
   const time = now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
   const label = role === 'user' ? 'ich' : role;
-
   const div = document.createElement('div');
   div.className = `msg ${role}`;
-  div.style.animation = 'msgIn .16s ease';
-
   if (role === 'assistant') {
-    div.innerHTML = `<div class="msg-row">
-      <div class="msg-avatar">A</div>
-      <div class="msg-body">
-        <div class="msg-meta"><span>${label}</span><span class="msg-time">${time}</span></div>
-        <div class="bubble">${escHtml(content)}</div>
-      </div>
-    </div>`;
+    div.innerHTML = `<div class="msg-row"><div class="msg-avatar">A</div><div class="msg-body"><div class="msg-meta"><span>${label}</span><span class="msg-time">${time}</span></div><div class="bubble">${escHtml(content)}</div></div></div>`;
   } else if (role === 'error') {
-    div.innerHTML = `<div class="msg-row">
-      <div class="msg-avatar" style="background:var(--red)">!</div>
-      <div class="msg-body">
-        <div class="msg-meta"><span>error</span><span class="msg-time">${time}</span></div>
-        <div class="bubble">${escHtml(content)}</div>
-      </div>
-    </div>`;
+    div.innerHTML = `<div class="msg-row"><div class="msg-avatar" style="background:var(--red)">!</div><div class="msg-body"><div class="msg-meta"><span>error</span><span class="msg-time">${time}</span></div><div class="bubble">${escHtml(content)}</div></div></div>`;
   } else {
-    const typeClass = type || '';
-    div.innerHTML = `<div class="msg-meta"><span>${label}</span><span class="msg-time">${time}</span></div><div class="bubble ${typeClass}">${escHtml(content)}</div>`;
+    div.innerHTML = `<div class="msg-meta"><span>${label}</span><span class="msg-time">${time}</span></div><div class="bubble ${type || ''}">${escHtml(content)}</div>`;
   }
-  m.appendChild(div);
-  scrollBottom();
-  return div;
+  m.appendChild(div); scrollBottom(); return div;
 }
 
 function addThinking() {
   const m = document.getElementById('messages');
-  const empty = m.querySelector('.empty');
-  if (empty) empty.remove();
+  const empty = m.querySelector('.empty'); if (empty) empty.remove();
   const div = document.createElement('div');
   div.className = 'msg assistant'; div.id = 'thinking';
-  div.innerHTML = `<div class="msg-row">
-    <div class="msg-avatar">A</div>
-    <div class="msg-body">
-      <div class="msg-meta"><span>assistant</span></div>
-      <div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div>
-    </div>
-  </div>`;
+  div.innerHTML = `<div class="msg-row"><div class="msg-avatar">A</div><div class="msg-body"><div class="msg-meta"><span>assistant</span></div><div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div></div></div>`;
   m.appendChild(div); scrollBottom();
 }
 
 function removeThinking() { const el = document.getElementById('thinking'); if (el) el.remove(); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ── Send text ──
 let busy = false;
 
 async function sendText() {
   if (!CHANNEL_ID || busy) return;
   const inp = document.getElementById('textInput');
-  const text = inp.value.trim();
-  if (!text) return;
+  const text = inp.value.trim(); if (!text) return;
   inp.value = ''; autoResize(inp); busy = true;
-  addMsg('user', text, 'text');
-  addThinking();
+  addMsg('user', text, 'text'); addThinking();
   try {
-    const r = await fetch(`/channel/${CHANNEL_ID}/send`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text})
-    });
-    const data = await r.json();
-    removeThinking();
+    const r = await fetch(`/channel/${CHANNEL_ID}/send`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text})});
+    const data = await r.json(); removeThinking();
     if (data.ok) addMsg('assistant', data.reply);
-    else addMsg('error', data.message || 'Unbekannter Fehler');
-  } catch(e) { removeThinking(); addMsg('error', `Fehler: ${e.message}`); }
+    else addMsg('error', data.message || 'Fehler');
+  } catch(e) { removeThinking(); addMsg('error', e.message); }
   busy = false;
 }
 
-// ── Audio recording ──
 let isRec = false, mediaRec = null, chunks = [], recInterval = null, recSecs = 0, currentStream = null, cancelled = false;
 
-async function toggleRec() {
-  if (isRec) stopRec(); else await startRec();
-}
+async function toggleRec() { if (isRec) stopRec(); else await startRec(); }
 
 async function startRec() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     chunks = [];
-    const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']
-      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
     mediaRec = new MediaRecorder(stream, mime ? {mimeType:mime} : {});
     currentStream = stream;
     mediaRec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    mediaRec.onstop = () => {
-      currentStream?.getTracks().forEach(t=>t.stop());
-      if (cancelled) { cancelled = false; return; }
-      sendAudio();
-    };
+    mediaRec.onstop = () => { currentStream?.getTracks().forEach(t=>t.stop()); if (cancelled) { cancelled = false; return; } sendAudio(); };
     mediaRec.start(200);
     isRec = true; recSecs = 0;
     document.getElementById('recBtn').classList.add('active');
@@ -493,82 +428,63 @@ async function startRec() {
     recInterval = setInterval(() => {
       recSecs++;
       const t = document.getElementById('recTimer');
-      const m = String(Math.floor(recSecs/60)).padStart(2,'0');
-      const s = String(recSecs%60).padStart(2,'0');
-      t.textContent = `● ${m}:${s}`; t.classList.add('active');
+      t.textContent = `● ${String(Math.floor(recSecs/60)).padStart(2,'0')}:${String(recSecs%60).padStart(2,'0')}`;
+      t.classList.add('active');
     }, 1000);
   } catch(e) { alert('Mikrofon nicht verfügbar: ' + e.message); }
 }
 
 function stopRec() {
   if (!mediaRec || !isRec) return;
-  mediaRec.stop(); isRec = false;
-  clearInterval(recInterval);
+  mediaRec.stop(); isRec = false; clearInterval(recInterval);
   document.getElementById('recBtn').classList.remove('active');
   document.getElementById('recBtn').textContent = '🎙';
   document.getElementById('cancelRecBtn').style.display = 'none';
-  const t = document.getElementById('recTimer');
-  t.textContent = ''; t.classList.remove('active');
+  const t = document.getElementById('recTimer'); t.textContent = ''; t.classList.remove('active');
 }
 
 function cancelRec() {
-  if (!isRec) return;
-  cancelled = true;
-  clearInterval(recInterval);
-  isRec = false;
+  if (!isRec) return; cancelled = true; clearInterval(recInterval); isRec = false;
   document.getElementById('recBtn').classList.remove('active');
   document.getElementById('recBtn').textContent = '🎙';
   document.getElementById('cancelRecBtn').style.display = 'none';
   mediaRec.stop();
   const t = document.getElementById('recTimer');
-  t.textContent = 'Verworfen'; t.classList.remove('active');
-  t.style.color = 'var(--red)';
+  t.textContent = 'Verworfen'; t.classList.remove('active'); t.style.color = 'var(--red)';
   setTimeout(() => { t.textContent = ''; t.style.color = ''; }, 1500);
 }
 
 async function sendAudio() {
-  if (!CHANNEL_ID || busy) return;
-  busy = true;
+  if (!CHANNEL_ID || busy) return; busy = true;
   const mime = mediaRec.mimeType || 'audio/webm';
   const ext = mime.includes('mp4') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
   const blob = new Blob(chunks, {type: mime});
-  const m = String(Math.floor(recSecs/60)).padStart(2,'0');
-  const s = String(recSecs%60).padStart(2,'0');
-  addMsg('user', `🎙 Audio ${m}:${s}`, 'audio');
+  addMsg('user', `🎙 Audio ${String(Math.floor(recSecs/60)).padStart(2,'0')}:${String(recSecs%60).padStart(2,'0')}`, 'audio');
   addThinking();
   try {
-    const fd = new FormData();
-    fd.append('file', blob, `recording.${ext}`);
+    const fd = new FormData(); fd.append('file', blob, `recording.${ext}`);
     const r = await fetch(`/channel/${CHANNEL_ID}/send-audio`, {method:'POST', body:fd});
-    const data = await r.json();
-    removeThinking();
+    const data = await r.json(); removeThinking();
     if (data.ok) addMsg('assistant', data.reply);
-    else addMsg('error', data.message || 'Unbekannter Fehler');
-  } catch(e) { removeThinking(); addMsg('error', `Fehler: ${e.message}`); }
+    else addMsg('error', data.message || 'Fehler');
+  } catch(e) { removeThinking(); addMsg('error', e.message); }
   busy = false;
 }
 
-// ── File upload ──
 async function uploadFile(input) {
-  if (!CHANNEL_ID || !input.files.length || busy) return;
-  busy = true;
-  const file = input.files[0];
-  input.value = '';
-  addMsg('user', `📎 ${file.name}`, 'file');
-  addThinking();
+  if (!CHANNEL_ID || !input.files.length || busy) return; busy = true;
+  const file = input.files[0]; input.value = '';
+  addMsg('user', `📎 ${file.name}`, 'file'); addThinking();
   try {
-    const fd = new FormData();
-    fd.append('file', file, file.name);
+    const fd = new FormData(); fd.append('file', file, file.name);
     const r = await fetch(`/channel/${CHANNEL_ID}/upload`, {method:'POST', body:fd});
-    const data = await r.json();
-    removeThinking();
+    const data = await r.json(); removeThinking();
     if (data.ok) addMsg('assistant', data.reply);
-    else addMsg('error', data.message || 'Unbekannter Fehler');
-  } catch(e) { removeThinking(); addMsg('error', `Fehler: ${e.message}`); }
+    else addMsg('error', data.message || 'Fehler');
+  } catch(e) { removeThinking(); addMsg('error', e.message); }
   busy = false;
 }
 
-// ── Modals ──
 function openCreateModal() { document.getElementById('createModal').classList.add('open'); }
 function closeCreateModal() { document.getElementById('createModal').classList.remove('open'); }
 function openEditModal() { const m = document.getElementById('editModal'); if(m) m.classList.add('open'); }
@@ -579,15 +495,8 @@ document.getElementById('createModal').addEventListener('click', e => { if(e.tar
 document.getElementById('editModal').addEventListener('click', e => { if(e.target === e.currentTarget) closeEditModal(); });
 {% endif %}
 
-// ── Mobile sidebar ──
-function toggleMobileSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('mobOverlay').classList.toggle('open');
-}
-function closeMobileSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('mobOverlay').classList.remove('open');
-}
+function toggleMobileSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mobOverlay').classList.toggle('open'); }
+function closeMobileSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('mobOverlay').classList.remove('open'); }
 </script>
 </body>
 </html>

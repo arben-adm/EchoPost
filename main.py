@@ -17,7 +17,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse as StarletteRedirect
 
 # ─── Config ──────────────────────────────────────────────────────────────────
-DB_PATH = os.environ.get("DB_PATH", "voicedesk.db")
+DB_PATH = os.environ.get("DB_PATH", "echopost.db")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")  # optional simple gate
 
 APP_SECRET = os.environ.get("APP_SECRET", "")
@@ -25,10 +25,10 @@ if not APP_SECRET:
     APP_SECRET = secrets.token_hex(32)
     print("WARNING: APP_SECRET not set. Sessions will not survive restarts.")
 
-serializer = URLSafeTimedSerializer(APP_SECRET, salt="vd-session")
+serializer = URLSafeTimedSerializer(APP_SECRET, salt="ep-session")
 SESSION_MAX_AGE = 8 * 3600
 
-app = FastAPI(title="VoiceDesk")
+app = FastAPI(title="EchoPost")
 templates = Jinja2Templates(directory="templates")
 
 # ─── Auth Middleware ──────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if path in ("/login", "/auth", "/logout") or path.startswith("/incoming"):
             return await call_next(request)
 
-        token = request.cookies.get("vd_session")
+        token = request.cookies.get("ep_session")
         if token:
             try:
                 serializer.loads(token, max_age=SESSION_MAX_AGE)
@@ -120,7 +120,7 @@ async def auth(request: Request, password: str = Form(...), next: str = Form("/"
         response = RedirectResponse(redirect_to, status_code=303)
         secure = request.headers.get("x-forwarded-proto") == "https"
         response.set_cookie(
-            "vd_session", value=token, httponly=True,
+            "ep_session", value=token, httponly=True,
             samesite="lax", max_age=SESSION_MAX_AGE, secure=secure,
         )
         return response
@@ -131,7 +131,7 @@ async def auth(request: Request, password: str = Form(...), next: str = Form("/"
 @app.post("/logout")
 async def logout():
     response = RedirectResponse("/login", status_code=303)
-    response.delete_cookie("vd_session")
+    response.delete_cookie("ep_session")
     return response
 
 # ─── Routes: Pages ────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ async def send_message(channel_id: int, request: Request):
         )
         conn.commit()
 
-    # Forward to n8n webhook
+    # Forward to webhook
     webhook = channel.get("webhook_out", "").strip()
     if not webhook:
         return JSONResponse({"error": "no_webhook", "message": "Kein ausgehender Webhook konfiguriert."})
@@ -399,7 +399,7 @@ async def upload_file(channel_id: int, file: UploadFile = File(...)):
 # ─── Incoming webhook endpoint ────────────────────────────────────────────────
 @app.post("/incoming/{channel_id}")
 async def incoming_webhook(channel_id: int, request: Request):
-    """n8n can POST back to this endpoint to push messages into a channel."""
+    """External services can POST to this endpoint to push messages into a channel."""
     channel = db_channel(channel_id)
     if not channel:
         raise HTTPException(404)

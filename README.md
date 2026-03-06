@@ -1,20 +1,20 @@
-# VoiceDesk
+# EchoPost
 
-Self-hosted chat UI for n8n workflows. FastAPI + SQLite, single Docker container.
+Self-hosted chat UI with webhook integration. FastAPI + SQLite, single Docker container.
 
-VoiceDesk acts as a bridge between users and [n8n](https://n8n.io) automation workflows — send text, audio recordings, or files through a clean chat interface, and receive processed responses back in real time.
+Send text, audio recordings, or files through a clean chat interface and receive processed responses back via webhooks.
 
 ## Features
 
 - **Unlimited channels** — organize conversations by workflow or topic
-- **Outgoing webhooks** — forward text, audio, and files to any n8n webhook endpoint
-- **Incoming webhooks** — n8n can push messages back into any channel via POST
+- **Outgoing webhooks** — forward text, audio, and files to any webhook endpoint
+- **Incoming webhooks** — external services can push messages back into any channel
 - **Persistent chat history** — all messages stored in SQLite
 - **Browser audio recording** — record and send voice messages directly
-- **File upload** — send documents and files to n8n for processing
-- **Dark theme UI** — modern interface inspired by Rocket.Chat
+- **File upload** — send documents and files for processing
+- **Dark theme UI** — minimal, modern interface
 - **Mobile responsive** — works on desktop and mobile devices
-- **Single-file backend** — one Python file, one HTML template, zero complexity
+- **Single-file backend** — one Python file, one HTML template
 
 ## Quick Start
 
@@ -23,9 +23,9 @@ docker compose up --build
 # → http://localhost:3010
 ```
 
-1. Click **+ Channel** to create a channel
-2. Set the **Outgoing Webhook** to your n8n webhook URL
-3. Start chatting — messages are forwarded to n8n and responses appear in the chat
+1. Click **+** to create a channel
+2. Set the **Outgoing Webhook** URL
+3. Start chatting — messages are forwarded and responses appear in the chat
 
 ## Deployment
 
@@ -40,35 +40,26 @@ docker compose up --build
 ### Option B: Docker Image
 
 ```bash
-docker build -t voicedesk .
-docker tag voicedesk registry.example.com/voicedesk:latest
-docker push registry.example.com/voicedesk:latest
+docker build -t echopost .
+docker tag echopost registry.example.com/echopost:latest
+docker push registry.example.com/echopost:latest
 ```
 
 Then deploy as a Docker image in your platform of choice.
-
-### Basic Auth (Traefik / Coolify)
-
-Under **Settings → Proxy / Traefik**, add:
-
-```
-traefik.http.middlewares.voicedesk-auth.basicauth.users=user:$$apr1$$...
-traefik.http.routers.voicedesk.middlewares=voicedesk-auth
-```
-
-Generate a password hash: `htpasswd -nb user yourpassword`
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `DB_PATH` | `/data/voicedesk.db` | Path to the SQLite database file |
+| `DB_PATH` | `/data/echopost.db` | Path to the SQLite database file |
+| `APP_PASSWORD` | _(empty)_ | Optional login password |
+| `APP_SECRET` | _(auto-generated)_ | Secret for session signing |
 
-## n8n Integration
+## Webhook Integration
 
-### Outgoing (VoiceDesk → n8n)
+### Outgoing (EchoPost → external)
 
-Set the **Outgoing Webhook** URL in the channel settings to your n8n webhook endpoint.
+Set the **Outgoing Webhook** URL in the channel settings.
 
 **Text messages:**
 ```json
@@ -90,7 +81,7 @@ multipart/form-data
   filename: "document.pdf"
 ```
 
-**Expected response from n8n** (any of these fields work):
+**Expected response** (any of these fields work):
 ```json
 { "text": "response" }
 { "output": "response" }
@@ -100,15 +91,15 @@ multipart/form-data
 
 Plain text responses are also accepted.
 
-### Incoming (n8n → VoiceDesk)
+### Incoming (external → EchoPost)
 
-n8n can push messages into any channel by POSTing to:
+Push messages into any channel by POSTing to:
 
 ```
 POST https://your-domain.com/incoming/{channel_id}
 Content-Type: application/json
 
-{ "text": "Message from n8n" }
+{ "text": "Hello from external service" }
 ```
 
 The channel ID is shown in the channel edit dialog.
@@ -121,4 +112,4 @@ The channel ID is shown in the channel edit dialog.
 
 ## License
 
-This project is released under the [MIT License](LICENSE) — free to use, modify, and distribute.
+This project is released under the [MIT License](LICENSE).
