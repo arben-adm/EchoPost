@@ -87,6 +87,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .msg.user .bubble.file{color:var(--blue);font-style:italic}
 .msg.assistant .bubble{background:var(--bubble-assist);border-radius:var(--r-bubble);border-bottom-left-radius:4px}
 .msg.error .bubble{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);color:var(--red);border-radius:var(--r-bubble)}
+/* Copy button */
+.bubble-wrap{position:relative}
+.copy-btn{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:0;transition:opacity .15s ease,color .15s ease,border-color .15s ease;z-index:2}
+.copy-btn:hover{color:var(--text);border-color:var(--dim)}
+.copy-btn.copied{color:var(--green);border-color:var(--green)}
+.bubble-wrap:hover .copy-btn{opacity:1}
+@media(max-width:640px){.copy-btn{opacity:.7}}
+
 .thinking{display:flex;gap:4px;align-items:center;padding:2px 0}
 .thinking span{width:4px;height:4px;border-radius:50%;background:var(--dimmer);animation:tp 1.2s ease-in-out infinite}
 .thinking span:nth-child(2){animation-delay:.2s}.thinking span:nth-child(3){animation-delay:.4s}
@@ -215,7 +223,10 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
           <div class="msg-avatar">A</div>
           <div class="msg-body">
             <div class="msg-meta"><span>assistant</span><span class="msg-time">{{ msg.created_at[11:16] }}</span></div>
-            <div class="bubble">{{ msg.content }}</div>
+            <div class="bubble-wrap">
+              <div class="bubble">{{ msg.content }}</div>
+              <button class="copy-btn" onclick="copyBubble(this)" title="Kopieren">⧉</button>
+            </div>
           </div>
         </div>
         {% elif msg.role == 'error' %}
@@ -369,7 +380,7 @@ function addMsg(role, content, type='text') {
   const div = document.createElement('div');
   div.className = `msg ${role}`;
   if (role === 'assistant') {
-    div.innerHTML = `<div class="msg-row"><div class="msg-avatar">A</div><div class="msg-body"><div class="msg-meta"><span>${label}</span><span class="msg-time">${time}</span></div><div class="bubble">${escHtml(content)}</div></div></div>`;
+    div.innerHTML = `<div class="msg-row"><div class="msg-avatar">A</div><div class="msg-body"><div class="msg-meta"><span>${label}</span><span class="msg-time">${time}</span></div><div class="bubble-wrap"><div class="bubble">${escHtml(content)}</div><button class="copy-btn" onclick="copyBubble(this)" title="Kopieren">⧉</button></div></div></div>`;
   } else if (role === 'error') {
     div.innerHTML = `<div class="msg-row"><div class="msg-avatar" style="background:var(--red)">!</div><div class="msg-body"><div class="msg-meta"><span>error</span><span class="msg-time">${time}</span></div><div class="bubble">${escHtml(content)}</div></div></div>`;
   } else {
@@ -389,6 +400,24 @@ function addThinking() {
 
 function removeThinking() { const el = document.getElementById('thinking'); if (el) el.remove(); }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function copyBubble(btn) {
+  const bubble = btn.parentElement.querySelector('.bubble');
+  const text = bubble.innerText || bubble.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied'); btn.textContent = '✓';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⧉'; }, 1500);
+  }).catch(() => {
+    // Fallback for older browsers / insecure contexts
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); btn.classList.add('copied'); btn.textContent = '✓';
+      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⧉'; }, 1500);
+    } catch(e) {}
+    document.body.removeChild(ta);
+  });
+}
 
 let busy = false;
 
