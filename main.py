@@ -20,6 +20,7 @@ from starlette.responses import RedirectResponse as StarletteRedirect
 DB_PATH = os.environ.get("DB_PATH", "echopost.db")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")  # optional simple gate
 
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "")
 APP_SECRET = os.environ.get("APP_SECRET", "")
 if not APP_SECRET:
     APP_SECRET = secrets.token_hex(32)
@@ -144,6 +145,7 @@ async def index(request: Request):
         "channels": channels,
         "current": first,
         "messages": db_messages(first["id"]) if first else [],
+        "webhook_active": bool(WEBHOOK_SECRET),
     })
 
 @app.get("/channel/{channel_id}", response_class=HTMLResponse)
@@ -157,6 +159,7 @@ async def channel_view(request: Request, channel_id: int):
         "channels": channels,
         "current": current,
         "messages": db_messages(channel_id),
+        "webhook_active": bool(WEBHOOK_SECRET),
     })
 
 # ─── Routes: Channel CRUD ─────────────────────────────────────────────────────
@@ -234,7 +237,8 @@ async def send_message(channel_id: int, request: Request):
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(webhook, json={"type": "text", "text": text})
+            headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
+            resp = await client.post(webhook, json={"type": "text", "text": text}, headers=headers)
         resp.raise_for_status()
 
         ct = resp.headers.get("content-type", "")
@@ -293,10 +297,12 @@ async def send_audio(channel_id: int, file: UploadFile = File(...)):
 
     try:
         async with httpx.AsyncClient(timeout=120) as client:
+            headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
             resp = await client.post(
                 webhook,
                 files={"file": (filename, audio_bytes, file.content_type or "audio/webm")},
                 data={"type": "audio"},
+                headers=headers,
             )
         resp.raise_for_status()
 
@@ -357,10 +363,12 @@ async def upload_file(channel_id: int, file: UploadFile = File(...)):
 
     try:
         async with httpx.AsyncClient(timeout=120) as client:
+            headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
             resp = await client.post(
                 webhook,
                 files={"file": (filename, file_bytes, file.content_type or "application/octet-stream")},
                 data={"type": "file", "filename": filename},
+                headers=headers,
             )
         resp.raise_for_status()
 
@@ -400,6 +408,11 @@ async def upload_file(channel_id: int, file: UploadFile = File(...)):
 @app.post("/incoming/{channel_id}")
 async def incoming_webhook(channel_id: int, request: Request):
     """External services can POST to this endpoint to push messages into a channel."""
+    if WEBHOOK_SECRET:
+        provided = request.headers.get("X-Webhook-Secret", "")
+        if not hmac.compare_digest(provided, WEBHOOK_SECRET):
+            raise HTTPException(403, "Invalid webhook secret")
+
     channel = db_channel(channel_id)
     if not channel:
         raise HTTPException(404)

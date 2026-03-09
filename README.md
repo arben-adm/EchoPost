@@ -54,6 +54,7 @@ Then deploy as a Docker image in your platform of choice.
 | `DB_PATH` | `/data/echopost.db` | Path to the SQLite database file |
 | `APP_PASSWORD` | _(empty)_ | Optional login password |
 | `APP_SECRET` | _(auto-generated)_ | Secret for session signing |
+| `WEBHOOK_SECRET` | _(empty)_ | Shared secret for webhook authentication (recommended: 128-char hex) |
 
 ## Webhook Integration
 
@@ -91,6 +92,12 @@ multipart/form-data
 
 Plain text responses are also accepted.
 
+### Webhook Authentication
+
+When `WEBHOOK_SECRET` is set, all outgoing webhook requests include the header `X-Webhook-Secret` with the secret value. Incoming webhook requests must also include the same header — requests with a missing or incorrect secret receive a `403` response.
+
+Generate a secret: `python -c "import secrets; print(secrets.token_hex(64))"`
+
 ### Incoming (external → EchoPost)
 
 Push messages into any channel by POSTing to:
@@ -98,6 +105,7 @@ Push messages into any channel by POSTing to:
 ```
 POST https://your-domain.com/incoming/{channel_id}
 Content-Type: application/json
+X-Webhook-Secret: your-secret-here  # required if WEBHOOK_SECRET is set
 
 { "text": "Hello from external service" }
 ```
