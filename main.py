@@ -236,7 +236,7 @@ async def send_message(channel_id: int, request: Request):
         return JSONResponse({"error": "no_webhook", "message": "Kein ausgehender Webhook konfiguriert."})
 
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=600) as client:
             headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
             resp = await client.post(webhook, json={"type": "text", "text": text}, headers=headers)
         resp.raise_for_status()
@@ -296,7 +296,7 @@ async def send_audio(channel_id: int, file: UploadFile = File(...)):
         return JSONResponse({"error": "no_webhook", "message": "Kein ausgehender Webhook konfiguriert."})
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=600) as client:
             headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
             resp = await client.post(
                 webhook,
@@ -362,7 +362,7 @@ async def upload_file(channel_id: int, file: UploadFile = File(...)):
         return JSONResponse({"error": "no_webhook", "message": "Kein ausgehender Webhook konfiguriert."})
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=600) as client:
             headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
             resp = await client.post(
                 webhook,
