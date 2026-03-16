@@ -340,10 +340,7 @@ input.fi:focus,textarea.fi:focus{border-color:var(--accent)}
         <div class="form-hint">Diesen Endpunkt als Webhook-URL eintragen</div>
       </div>
       <div class="modal-actions">
-        <form method="post" action="/channel/{{ current.id }}/delete"
-              onsubmit="return confirm('Channel und alle Nachrichten löschen?')" style="margin:0">
-          <button type="submit" class="btn-danger-outline">Löschen</button>
-        </form>
+        <button type="button" class="btn-danger-outline" onclick="if(confirm('Channel und alle Nachrichten löschen?')){fetch('/channel/{{ current.id }}/delete',{method:'POST',redirect:'follow'}).then(()=>window.location='/')}">Löschen</button>
         <button type="button" class="btn-secondary" onclick="closeEditModal()">Abbrechen</button>
         <button type="submit" class="btn-primary">Speichern</button>
       </div>
