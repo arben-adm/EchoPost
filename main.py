@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import hmac
 import secrets
@@ -7,6 +8,8 @@ import sqlite3
 from datetime import datetime
 from contextlib import contextmanager
 from typing import Optional
+
+from pydub import AudioSegment
 
 from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -281,7 +284,15 @@ async def send_audio(channel_id: int, file: UploadFile = File(...)):
         raise HTTPException(404)
 
     audio_bytes = await file.read()
-    filename = file.filename or "recording.webm"
+
+    # Convert webm/opus to mp3 via pydub + ffmpeg
+    webm_buffer = io.BytesIO(audio_bytes)
+    mp3_buffer = io.BytesIO()
+    AudioSegment.from_file(webm_buffer, format="webm").export(mp3_buffer, format="mp3")
+    mp3_buffer.seek(0)
+    mp3_bytes = mp3_buffer.read()
+
+    filename = "recording.mp3"
     label = f"🎙 {filename}"
 
     with get_db() as conn:
@@ -300,7 +311,7 @@ async def send_audio(channel_id: int, file: UploadFile = File(...)):
             headers = {"X-Webhook-Secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else {}
             resp = await client.post(
                 webhook,
-                files={"file": (filename, audio_bytes, file.content_type or "audio/webm")},
+                files={"file": (filename, mp3_bytes, "audio/mpeg")},
                 data={"type": "audio"},
                 headers=headers,
             )

@@ -10,7 +10,7 @@ Send text, audio recordings, or files through a clean chat interface and receive
 - **Outgoing webhooks** — forward text, audio, and files to any webhook endpoint
 - **Incoming webhooks** — external services can push messages back into any channel
 - **Persistent chat history** — all messages stored in SQLite
-- **Browser audio recording** — record and send voice messages directly
+- **Browser audio recording** — record and send voice messages directly (auto-converted to MP3)
 - **File upload** — send documents and files for processing
 - **Dark theme UI** — minimal, modern interface
 - **Mobile responsive** — works on desktop and mobile devices
@@ -67,10 +67,10 @@ Set the **Outgoing Webhook** URL in the channel settings.
 { "type": "text", "text": "user message" }
 ```
 
-**Audio recordings:**
+**Audio recordings** (browser WebM/Opus is auto-converted to MP3 before sending):
 ```
 multipart/form-data
-  file: <binary audio>
+  file: recording.mp3 (audio/mpeg)
   type: "audio"
 ```
 
@@ -114,9 +114,9 @@ The channel ID is shown in the channel edit dialog.
 
 ## Tech Stack
 
-- **Backend:** FastAPI, Uvicorn, SQLite, httpx
+- **Backend:** FastAPI, Uvicorn, SQLite, httpx, pydub
 - **Frontend:** Vanilla JS, Jinja2 templates, Inter font
-- **Container:** Python 3.12-slim, single Dockerfile
+- **Container:** Python 3.12-slim, ffmpeg, single Dockerfile
 
 ## License
 
