@@ -112,8 +112,8 @@ def db_messages(channel_id: int):
 # ─── Routes: Auth ─────────────────────────────────────────────────────────────
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = "/"):
-    return templates.TemplateResponse("login.html", {
-        "request": request, "next": next, "error": None,
+    return templates.TemplateResponse(request, "login.html", context={
+        "next": next, "error": None,
     })
 
 @app.post("/auth")
@@ -128,8 +128,8 @@ async def auth(request: Request, password: str = Form(...), next: str = Form("/"
             samesite="lax", max_age=SESSION_MAX_AGE, secure=secure,
         )
         return response
-    return templates.TemplateResponse("login.html", {
-        "request": request, "next": next, "error": "Falsches Passwort",
+    return templates.TemplateResponse(request, "login.html", context={
+        "next": next, "error": "Falsches Passwort",
     })
 
 @app.post("/logout")
@@ -143,8 +143,7 @@ async def logout():
 async def index(request: Request):
     channels = db_channels()
     first = channels[0] if channels else None
-    return templates.TemplateResponse("index.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "index.html", context={
         "channels": channels,
         "current": first,
         "messages": db_messages(first["id"]) if first else [],
@@ -157,8 +156,7 @@ async def channel_view(request: Request, channel_id: int):
     current = db_channel(channel_id)
     if not current:
         return RedirectResponse("/")
-    return templates.TemplateResponse("index.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "index.html", context={
         "channels": channels,
         "current": current,
         "messages": db_messages(channel_id),
